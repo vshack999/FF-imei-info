@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Checker</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #333; }
+        .section { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-ff { background: #ff4757; }
+        .btn-imei { background: #2ed573; }
+        .btn-tg { background: #0088cc; margin-top: 10px; }
+        .result-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 18px; }
+        .result-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .label { font-weight: bold; color: #1a73e8; }
+        .footer { text-align: center; font-size: 13px; color: #777; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🔍 Data Checker</h2>
+
+    <div class="section">
+        <h3 style="margin-top:0;">🎮 FF ID Info</h3>
+        <input type="text" id="ffUid" placeholder="Enter Free Fire UID">
+        <button class="btn-ff" onclick="fetchFF()">Check FF Info</button>
+        <div id="ffResult"></div>
+    </div>
+
+    <div class="section" style="border:none;">
+        <h3>📱 IMEI Info</h3>
+        <input type="text" id="imeiNum" placeholder="Enter IMEI Number">
+        <button class="btn-imei" onclick="checkIMEI()">Check IMEI (New Tab)</button>
+        
+        <a href="https://t.me/vshack999" target="_blank" style="text-decoration:none;">
+            <button class="btn-tg">Join Our Telegram Channel</button>
+        </a>
+    </div>
+
+    <div class="footer">
+        <a href="https://t.me/Vikashsahu07">Developer ID vikash sahu </a>
+        <p>Disclaimer: This tool is for educational purposes only. We are not responsible for any misuse of data.</p>
+    </div>
+</div>
+
+<script>
+    async function fetchFF() {
+        const uid = document.getElementById('ffUid').value;
+        const resDiv = document.getElementById('ffResult');
+        if(!uid) return alert("UID daalein!");
+        
+        resDiv.innerHTML = "⏳ Loading...";
+        try {
+            const res = await fetch(`https://anku-ffapi-inky.vercel.app/ff?uid=${uid}`);
+            const data = await res.json();
+            
+            let html = "<table class='result-table'>";
+            for (let key in data) {
+                html += `<tr><td>✨</td><td class='label'>${key.toUpperCase()}</td><td>${data[key]}</td></tr>`;
+            }
+            html += "</table>";
+            resDiv.innerHTML = html;
+        } catch(e) { resDiv.innerHTML = "<p style='color:red;'>❌ Error aagaya!</p>"; }
+    }
+
+    function checkIMEI() {
+        const imei = document.getElementById('imeiNum').value;
+        if(imei) {
+            window.open('https://ng-imei-info.vercel.app/?imei_num=' + imei, '_blank');
+        } else {
+            alert('IMEI number daalein!');
+        }
+    }
+</script>
+
+</body>
+</html>
