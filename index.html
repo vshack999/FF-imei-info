@@ -1,60 +1,476 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phone Lookup System</title>
+    <title>Vehicle · FF · IMEI (simple + all)</title>
     <style>
-        body { background: #050505; color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .card { width: 100%; max-width: 400px; background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #444; color: #00eaff; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #00eaff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .result-box { margin-top: 20px; background: #1a1a1a; padding: 15px; border-radius: 10px; display: none; }
-        .data-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #333; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --main-color: #00eaff;
+            --bg-color: #050505;
+            --card-bg: rgba(15, 15, 15, 0.98);
+            --neon-green: #39ff14;
+            --warning-color: #ffcc00;
+            --error-red: #ff3366;
+            --soft-gray: #1e1e1e;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 20px 0 40px 0;
+        }
+
+        #matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 560px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            z-index: 5;
+        }
+
+        .brand-header {
+            text-align: center;
+            padding: 10px 0 5px;
+            border-bottom: 1px solid #222;
+            width: 90%;
+        }
+        .brand-header h1 {
+            color: var(--main-color);
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(0,234,255,0.5);
+            margin-bottom: 5px;
+        }
+        .brand-header p {
+            color: #aaa;
+            font-size: 0.7rem;
+            word-spacing: 2px;
+        }
+
+        .card-modern {
+            background: var(--card-bg);
+            border: 1px solid #2a2a2a;
+            border-radius: 24px;
+            padding: 22px 18px;
+            width: 95%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            transition: 0.2s;
+            backdrop-filter: blur(2px);
+        }
+
+        .card-title {
+            color: var(--main-color);
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 14px;
+            background: #0b0b0b;
+            border: 1px solid #333;
+            border-radius: 18px;
+            color: #0ff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            outline: none;
+            transition: 0.25s;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        input:focus {
+            border-color: var(--main-color);
+            box-shadow: 0 0 12px rgba(0,234,255,0.3);
+        }
+
+        button {
+            background: var(--main-color);
+            border: none;
+            border-radius: 40px;
+            padding: 15px 20px;
+            font-weight: bold;
+            font-size: 1rem;
+            text-transform: uppercase;
+            color: #000;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            letter-spacing: 1.5px;
+            border: 1px solid transparent;
+        }
+
+        button:hover {
+            background: #00c2d4;
+            box-shadow: 0 0 20px #00eaff77;
+            transform: scale(1.01);
+        }
+
+        .btn-imei {
+            background: #2ed573;
+            color: #000;
+        }
+        .btn-imei:hover {
+            background: #1e9e53;
+            box-shadow: 0 0 20px #2ed57399;
+        }
+
+        .btn-dev {
+            background: #0088cc;
+            color: white;
+        }
+        .btn-dev:hover {
+            background: #006699;
+            box-shadow: 0 0 15px #0088cc;
+        }
+
+        .result-block {
+            margin-top: 20px;
+            border-top: 1px dashed #333;
+            padding-top: 15px;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        .result-table td {
+            padding: 12px 6px;
+            border-bottom: 1px solid #252525;
+        }
+        .label {
+            font-weight: bold;
+            color: var(--main-color);
+            width: 40%;
+        }
+
+        .json-box {
+            background: #0c0c0c;
+            border-radius: 16px;
+            padding: 15px;
+            color: #0fa;
+            font-size: 0.7rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            border: 1px solid #2a5f6b;
+            margin-bottom: 15px;
+        }
+
+        .vehicle-card {
+            border-left: 4px solid var(--main-color);
+            margin-bottom: 16px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #1f1f1f;
+            font-size: 0.95rem;
+        }
+        .data-row .label {
+            color: #aaa;
+            font-weight: 400;
+            width: auto;
+        }
+        .data-row .val {
+            color: #fff;
+            font-weight: 500;
+            text-align: right;
+            word-break: break-word;
+            max-width: 60%;
+        }
+
+        .disclaimer-box {
+            background: rgba(255,204,0,0.05);
+            border: 1px dashed var(--warning-color);
+            border-radius: 16px;
+            padding: 14px;
+            font-size: 0.7rem;
+            color: #ffcc00cc;
+            line-height: 1.5;
+            text-align: justify;
+            margin-top: 25px;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: #666;
+            text-align: center;
+            width: 90%;
+        }
+        .footer-links a {
+            color: var(--main-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .hr-glow {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #00eaff, transparent);
+            width: 80%;
+            margin: 10px auto;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2 style="text-align:center; color:#00eaff;">PHONE LOOKUP 🛰️</h2>
-    <input type="text" id="numInput" placeholder="Enter number...">
-    <button onclick="searchNumber()">SEARCH NOW</button>
-    <div id="resArea" class="result-box"></div>
+<canvas id="matrix"></canvas>
+
+<div class="main-container">
+    <div class="brand-header">
+        <h1>⚡ V-INTEL ⚡</h1>
+        <p>vehicle · free fire · IMEI (simple + full)</p>
+    </div>
+
+    <!-- VEHICLE SECTION (RC) -->
+    <div class="card-modern">
+        <div class="card-title">
+            <span>🚘 VEHICLE INFO (RC)</span>
+        </div>
+        <div class="input-group">
+            <input type="text" id="rcInput" placeholder="enter registration number e.g. UP32XY1234" maxlength="15">
+            <button onclick="fetchVehicle()">🔍 SEARCH VEHICLE</button>
+        </div>
+        <div id="vehicleResult" class="result-block"></div>
+    </div>
+
+    <!-- FREE FIRE SECTION -->
+    <div class="card-modern">
+        <div class="card-title">
+            <span>🎮 FREE FIRE UID</span>
+        </div>
+        <div class="input-group">
+            <input type="text" id="ffUid" placeholder="enter Free Fire UID">
+            <button onclick="fetchFF()">⚡ CHECK FF PROFILE</button>
+        </div>
+        <div id="ffResult" class="result-block"></div>
+    </div>
+
+    <!-- IMEI SECTION: SIMPLE DETAILS + BUTTON FOR ALL DETAILS (new tab) -->
+    <div class="card-modern">
+        <div class="card-title">
+            <span>📱 IMEI CHECKER</span>
+        </div>
+        <div class="input-group">
+            <input type="text" id="imeiNum" placeholder="enter IMEI (15 digits)">
+            <!-- New button: show simple details inline -->
+            <button class="btn-imei" onclick="showSimpleIMEI()">🔍 SHOW SIMPLE DETAILS</button>
+            <!-- Second button: open all details in new tab (original behavior) -->
+            <button class="btn-dev" onclick="openAllIMEI()">🌐 ALL DETAILS (NEW TAB)</button>
+            <!-- developer telegram -->
+            <a href="https://t.me/Vikashsahu07" target="_blank" style="text-decoration: none;">
+                <button class="btn-dev" style="background:#0088cc;">📱 CONTACT DEVELOPER</button>
+            </a>
+        </div>
+        <!-- Result area for simple IMEI details -->
+        <div id="imeiSimpleResult" class="result-block"></div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer-box">
+        <b>⚠️ DISCLAIMER:</b> All data shown is for educational purposes only. We are not responsible for any misuse or inaccurate information. For official records, use respective government portals.
+    </div>
+
+    <div class="footer-links">
+        developer: <a href="https://t.me/Vikashsahu07" target="_blank">⚡ Vikash Sahu</a> · 
+        <a href="https://t.me/Vikashsahu07" target="_blank">telegram ID</a>
+    </div>
+    <div class="hr-glow"></div>
 </div>
 
 <script>
-    async function searchNumber() {
-        const num = document.getElementById("numInput").value.trim();
-        const area = document.getElementById("resArea");
-        
-        if(!num) return;
+    // --- MATRIX BACKGROUND ---
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; 
+    canvas.height = window.innerHeight;
+    const drops = Array(Math.floor(canvas.width/16)).fill(1);
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#00eaff";
+        drops.forEach((y, i) => {
+            ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), i * 16, y * 16);
+            if (y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        });
+    }
+    setInterval(drawMatrix, 50);
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight;
+    });
 
-        area.style.display = "block";
-        area.innerHTML = "🔍 Scanning database...";
+    // --- VEHICLE INFO (existing) ---
+    async function fetchVehicle() {
+        const rc = document.getElementById('rcInput').value.trim().toUpperCase();
+        const resDiv = document.getElementById('vehicleResult');
+        if (!rc) return alert("❗ Please enter vehicle number");
+
+        resDiv.innerHTML = `<div style="color:#0ff; padding:10px; text-align:center;">⏳ loading satellite data ...</div>`;
 
         try {
-            // Corsproxy ka use kiya gaya hai taaki connection error na aaye
             const proxy = "https://corsproxy.io/?";
-            const url = `https://openosintx.vippanel.in/num.php?key=Enjoy&number=${num}`;
-            
-            const response = await fetch(proxy + encodeURIComponent(url));
+            const apiUrl = `https://vehicle-api-info-suruzxxr.vercel.app/vehicle-info?rc=${rc}`;
+            const response = await fetch(proxy + encodeURIComponent(apiUrl));
             const data = await response.json();
 
-            if(data.success && data.result) {
-                const r = data.result;
-                area.innerHTML = `
-                    <div class="data-row"><span>Name:</span> <b>${r.name || 'N/A'}</b></div>
-                    <div class="data-row"><span>Mobile:</span> <b>${r.mobile}</b></div>
-                    <div class="data-row"><span>Address:</span> <small style="text-align:right;">${r.address || 'N/A'}</small></div>
+            if (data && data.basic_info) {
+                const b = data.basic_info;
+                const i = data.insurance || {};
+
+                let html = `
+                    <div class="json-box">${JSON.stringify(data, null, 4)}</div>
+
+                    <div class="vehicle-card" style="border-left-color: #00eaff;">
+                        <div class="data-row"><span class="label">👤 Owner</span> <span class="val">${b.owner_name || '—'}</span></div>
+                        <div class="data-row"><span class="label">🔢 RC number</span> <span class="val">${rc}</span></div>
+                        <div class="data-row"><span class="label">🏭 Maker/Model</span> <span class="val">${b.maker_model || '—'}</span></div>
+                        <div class="data-row"><span class="label">⛽ Fuel type</span> <span class="val">${b.fuel_type || '—'}</span></div>
+                        <div class="data-row"><span class="label">🏛️ City / RTO</span> <span class="val">${b.city || '—'}</span></div>
+                        <div class="data-row"><span class="label">📅 Reg. year</span> <span class="val">${b.registration_date || '—'}</span></div>
+                        <div class="data-row"><span class="label">🛡️ Insurance</span> <span class="val" style="color:#39ff14;">${i.status || 'N/A'}</span></div>
+                    </div>
                 `;
+                resDiv.innerHTML = html;
             } else {
-                area.innerHTML = "❌ No records found.";
+                resDiv.innerHTML = `<div style="color: #ff6666; padding:15px; text-align:center;">❌ Vehicle not found or API limit reached.</div>`;
             }
-        } catch(err) {
-            area.innerHTML = "⚠️ Error: Please host this file on a website (like Vercel/GitHub) to avoid browser security blocks.";
+        } catch (e) {
+            console.error(e);
+            resDiv.innerHTML = `<div style="color:#ff6666; padding:15px; text-align:center;">⚠️ Server connection error. Try later.</div>`;
         }
     }
-</script>
 
+    // --- FREE FIRE (existing) ---
+    async function fetchFF() {
+        const uid = document.getElementById('ffUid').value.trim();
+        const resDiv = document.getElementById('ffResult');
+        if(!uid) return alert("❗ Enter Free Fire UID");
+        
+        resDiv.innerHTML = "<div style='color:#0ff; padding:10px;'>⏳ loading ...</div>";
+        try {
+            const res = await fetch(`https://anku-ffapi-inky.vercel.app/ff?uid=${uid}`);
+            const data = await res.json();
+            
+            let html = "<table class='result-table'>";
+            for (let key in data) {
+                let val = data[key];
+                if (typeof val === 'object') val = JSON.stringify(val);
+                html += `<tr><td class='label'>${key.toUpperCase()}</td><td>${val}</td></tr>`;
+            }
+            html += "</table>";
+            resDiv.innerHTML = html;
+        } catch(e) { 
+            resDiv.innerHTML = "<p style='color:#ff6666;'>❌ Failed to load FF data.</p>"; 
+        }
+    }
+
+    // --- IMEI simple details (fetch and show minimal info) ---
+    async function showSimpleIMEI() {
+        const imei = document.getElementById('imeiNum').value.trim();
+        const resDiv = document.getElementById('imeiSimpleResult');
+        if (!imei) return alert("❗ Please enter IMEI number");
+
+        resDiv.innerHTML = `<div style="color:#0ff; padding:10px;">⏳ fetching basic IMEI info ...</div>`;
+
+        try {
+            // using the same endpoint but we'll extract only few fields
+            const proxy = "https://corsproxy.io/?";
+            const apiUrl = `https://ng-imei-info.vercel.app/?imei_num=${encodeURIComponent(imei)}`;
+            const response = await fetch(proxy + encodeURIComponent(apiUrl));
+            const data = await response.json();  // expects json
+
+            // depending on API response structure, we try to extract common simple fields
+            // fallback: show device, brand, model if available
+            let brand = data?.brand || data?.deviceName?.brand || data?.manufacturer || 'N/A';
+            let model = data?.model || data?.deviceName?.model || data?.device_model || 'N/A';
+            let tech = data?.technology || data?.nettech || 'N/A';
+            let released = data?.released || data?.year || 'N/A';
+
+            // build simple card
+            let html = `
+                <div class="vehicle-card" style="border-left-color: #2ed573;">
+                    <div class="data-row"><span class="label">📱 Brand</span> <span class="val">${brand}</span></div>
+                    <div class="data-row"><span class="label">🔤 Model</span> <span class="val">${model}</span></div>
+                    <div class="data-row"><span class="label">📡 Network</span> <span class="val">${tech}</span></div>
+                    <div class="data-row"><span class="label">📅 Released</span> <span class="val">${released}</span></div>
+                </div>
+                <div style="font-size:0.7rem; color:#aaa; margin-top:8px;">*simple fields extracted — click "all details" for full info</div>
+            `;
+            resDiv.innerHTML = html;
+        } catch (e) {
+            console.error(e);
+            resDiv.innerHTML = `<div style="color:#ff6666; padding:10px;">❌ Could not load simple IMEI details. Try "All details" button.</div>`;
+        }
+    }
+
+    // --- IMEI all details (new tab) - original function but renamed ---
+    function openAllIMEI() {
+        const imei = document.getElementById('imeiNum').value.trim();
+        if(imei) {
+            window.open('https://ng-imei-info.vercel.app/?imei_num=' + encodeURIComponent(imei), '_blank');
+        } else {
+            alert('❗ Please enter IMEI number');
+        }
+    }
+
+    // Enter key shortcuts
+    document.getElementById('rcInput').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') fetchVehicle();
+    });
+    document.getElementById('ffUid').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') fetchFF();
+    });
+    document.getElementById('imeiNum').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') showSimpleIMEI();  // default simple on enter
+    });
+
+    // No pin lock — fully accessible
+</script>
 </body>
 </html>
